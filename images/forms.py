@@ -1,6 +1,6 @@
 from django import forms
 
-class UploadFileForm():
+class UploadFileForm(forms.Form):
     file = forms.FileField(required=True, label='Imagen',
                            widget=forms.FileInput(attrs={'accept':'image/*'}))
 
