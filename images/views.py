@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from .forms import UploadFileForm
+from .models import Image
 
 # Create your views here.
 def create(request):
@@ -8,6 +9,9 @@ def create(request):
         if form.is_valid():
             image = form.cleaned_data['file']
 
-            print(image)    
-            print(image.__dict__)
+            image= Image.objects.create(
+                name = image._name,
+                content_type = image.content_type,
+                size = image.size
+            )
             return redirect('albums:list')
