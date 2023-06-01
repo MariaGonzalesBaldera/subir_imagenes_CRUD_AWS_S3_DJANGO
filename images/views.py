@@ -1,17 +1,44 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
+
+from django.http import JsonResponse
 from .forms import UploadFileForm
-from .models import Image
+from .models import Image, Album
+from AWS import upload_image
+from django.conf import settings
+
+def update(request, pk):
+    image = get_object_or_404(Image, pk=pk)
+
+    if request.method == 'POST':
+        new_name = request.POST.get('name','')
+        image.set_name(new_name)
+
+    return JsonResponse({
+        'id':image.id,
+        'name':image.title,
+        'url':image.url
+    })
 
 # Create your views here.
 def create(request):
     if request.method == 'POST':
         form = UploadFileForm(request.POST , request.FILES)
         if form.is_valid():
-            image = form.cleaned_data['file']
+            file = form.cleaned_data['file']
+            album = get_object_or_404(Album, id= form.cleaned_data['album_id'])
 
-            image= Image.objects.create(
-                name = image._name,
-                content_type = image.content_type,
-                size = image.size
-            )
-            return redirect('albums:list')
+            key = album.key + file._name
+            if upload_image(settings.BUCKET , key, file):
+
+
+                image = Image.objects.create(
+                    name = file._name,
+                    content_type = file.content_type,
+                    size = file.size,
+                    bucket = settings.BUCKET,
+                    key = key,
+                    album = album
+                )
+
+            return redirect('albums:detail', album.id)
+        

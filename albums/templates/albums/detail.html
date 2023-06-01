@@ -1,14 +1,22 @@
 {% extends 'base/base.html' %}
 
+{% block style %}
+    <style>
+        .row-image{
+            cursor: pointer;
+        }
+    </style>
+{% endblock %}
+
 {% block content %}
 {% include 'images/snippets/modal.html' %}
 
-    <div class="row">
+    <div class="row mt-2">
         <div class="col">
-            <h1> {{ object }} </h1>
+            <h4> <a href="{% url 'albums:list' %}">Galería/</a> {{ object }} </h4>
         </div>
     </div>
-
+    <hr>
     <div class="row">
         <div class="col">
             <button type="button" class="btn btn-light" data-bs-toggle="modal" data-bs-target="#newImage">
@@ -16,4 +24,131 @@
               </button>
         </div>
     </div>
+
+    <div class="row mt-3">
+        <div class="col-8">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Fecha de Creación</th>
+                        <th>Size</th>
+                        <th>
+                            
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for image in images %}
+                        <tr class="row-image" image-id="{{ image.id }}">
+                            <td><input type="hidden" value="{{ image.url }}" id="image-preview-{{ image.id }}">
+                                <div id="image-name-{{ image.id }}">
+                                    {{ image.name }}
+                                </div>
+                                <form action="{% url 'images:update' image.pk %}" method="POST" class="image-form" image-id="{{ image.id }}">
+                                    {% csrf_token %}
+                                    <input type="hidden" value="{{ image.title }}" class="form-control" id="image-input-name-{{ image.id }}" name="name">
+                                </form>
+                            </td>
+                            <td>
+                                {{ image.created_at }}
+                            </td>
+                            <td>
+                                {{ image.size }}
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown">
+                                        
+                                    </button>
+                                    <div class="dropdown-menu">
+                                        <a href=" {{ image.url }} " target="_blank" class="dropdown-item">Vista previa</a>
+                                        <a href="" class="dropdown-item image-edit" image-id="{{ image.id }}">Editar nombre</a>
+                                        <a href="" class="dropdown-item">Descarga</a>
+                                        <div class="dropdown-divider"></div>
+                                        <a href="" class="dropdown-item">Eliminar</a>
+
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="col-4">
+            <img src="" alt="" width="300" height="300" id="image-preview">
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascript %}
+    <script>
+        const imagePreview = document.getElementById('image-preview')
+        const imageDefault = 'https://cfimagenesproject.s3.amazonaws.com/vacio.png'
+
+        function selectRow(row){
+            let imageId = row.getAttribute('image-id')
+                console.log(imageId)
+                let input = document.getElementById('image-preview-'+imageId)
+                imagePreview.src = input.value
+
+                document.querySelectorAll('.table-active').forEach(e =>{
+                    e.classList.remove('table-active')
+                })
+
+                row.classList.add('table-active')
+        }
+
+        function setDefaultImage(){
+            let rows = document.getElementsByTagName('tr')
+            if (rows.length >=2){
+                selectRow(rows[1])
+            }else{
+                imagePreview.src = imageDefault
+            }
+        }
+
+        document.querySelectorAll('.row-image').forEach(e=>{
+            e.addEventListener('click', function(event){
+                selectRow(this)
+            })
+        })
+
+        document.querySelectorAll('.image-edit').forEach(e=>{
+            e.addEventListener('click',function(event){
+                event.preventDefault()
+                let imageId = this.getAttribute('image-id')
+                let input = document.getElementById('image-input-name-'+imageId)
+
+                let div = document.getElementById('image-name-'+ imageId)
+                div.style.display='none'
+                input.setAttribute('type', 'text')
+            })
+        })
+        document.querySelectorAll('.image-form').forEach(e=>{
+            e.addEventListener('submit', function(event){
+                event.preventDefault()
+
+                fetch(this.action,{
+                    body : new FormData(this),
+                    method:'POST'
+                })
+                .then(response => response.json())
+                .then(data =>{
+                    let imageId = this.getAttribute('image-id')
+                    let input = document.getElementById('image-input-name-'+imageId)
+                    input.value = data.name
+                    input.setAttribute('type','hidden')
+                    let div = document.getElementById('image-name-'+ imageId)
+                    div.innerHTML = data.name
+                    div.style.display ='block'
+
+                    let preview = document.getElementById('image-preview-'+imageId)
+                    preview.value = data.url
+                })
+            })
+        })
+        setDefaultImage();
+    </script>
 {% endblock %}

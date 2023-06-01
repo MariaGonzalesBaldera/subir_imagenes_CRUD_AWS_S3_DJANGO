@@ -18,7 +18,7 @@ def upload_image(bucket, mediafile_key, file):
         return bucket.put_object(
             ACL = 'public-read',
             Key = mediafile_key,
-            ContenType = file.content_type,
+            ContentType = file.content_type,
             Body = file
         ) 
 
