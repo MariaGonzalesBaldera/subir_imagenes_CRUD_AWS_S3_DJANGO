@@ -16,15 +16,29 @@
 <hr />
 <div class="row">
   <div class="col">
-    <button
-      type="button"
-      class="btn btn-light"
-      data-bs-toggle="modal"
-      data-bs-target="#newImage"
-    >
-      Nueva Imagen
-    </button>
-  </div>
+      <button
+        type="button"
+        class="btn btn-secondary"
+        data-bs-toggle="modal"
+        data-bs-target="#newImage"
+      >
+        Nueva Imagen
+      </button>
+      <a
+        href="{% url 'images:download_many' %}"
+        class="btn btn-info disabled"
+        id="download-images"
+      >
+        Descargar
+      </a>
+      <a
+        href="{% url 'images:delete_many' %}"
+        class="btn btn-danger disabled"
+        id="delete-images"
+      >
+        Eliminar
+      </a>
+</div>
 </div>
 
 <div class="row mt-3">
@@ -32,6 +46,9 @@
     <table class="table">
       <thead>
         <tr>
+          <td><div class="form-check">
+            <input type="checkbox" name="" class="form-check-input" id="check-all-images">
+          </div></td>
           <th>Nombre</th>
           <th>Fecha de Creación</th>
           <th>Size</th>
@@ -40,7 +57,10 @@
       </thead>
       <tbody>
         {% for image in images %}
-        <tr class="row-image" image-id="{{ image.id }}">
+        <tr class="row-image" image-id="{{ image.id }}" id="image-{{ image.id }}">
+            <td><div class="form-check">
+                <input type="checkbox" name="" class="form-check-input check-images" id="" image-id="{{ image.id }}">
+              </div></td>
           <td>
             <input
               type="hidden"
@@ -111,6 +131,30 @@
 <script>
   const imagePreview = document.getElementById("image-preview");
   const imageDefault = "https://cfimagenesproject.s3.amazonaws.com/vacio.png";
+    const checkAllImages = document.getElementById('check-all-images')
+    const downloadImages = document.getElementById('download-images')
+    const deleteImages = document.getElementById('delete-images')
+
+    function checkInputs(){
+        let images = document.querySelectorAll('input.check-images[type="checkbox"]:checked')
+        if (images.length>=2){
+            downloadImages.classList.remove('disabled')
+            deleteImages.classList.remove('disabled')
+        }else{
+            downloadImages.classList.add('disabled')
+            deleteImages.classList.add('disabled')
+        }
+    }
+
+    function getImagesSelected(){
+        let ids = []
+    let images = document.querySelectorAll('input.check-images[type="checkbox"]:checked')
+        for(i=0; i<images.length; i++){
+            let imageId = images[i].getAttribute('image-id')
+            ids.push(imageId)
+        }
+    return ids
+    }
 
   function selectRow(row) {
     let imageId = row.getAttribute("image-id");
@@ -173,6 +217,12 @@
         });
     });
   });
+  document.querySelectorAll('.check-images').forEach(e=>{
+    e.addEventListener('change',function(event){
+        checkInputs()
+    })
+  })
+
 
   let deleteModal = document.getElementById("deleteModal");
   deleteModal.addEventListener("show.bs.modal", function (event) {
@@ -187,6 +237,36 @@
         buttonId.href = data.delete_url
       });
   });
+
+  checkAllImages.addEventListener('change', function(e){
+    document.querySelectorAll('.check-images').forEach(e=>{
+        e.checked = this.checked
+        checkInputs()
+    })
+  })
+  deleteImages.addEventListener('click', function(event){
+    event.preventDefault()
+    let ids =getImagesSelected()
+    
+    fetch(this.href,{
+        method:'POST',
+        body : JSON.stringify({'ids': ids})
+    })
+    .then(response => response.json())
+    .then(function(data){
+        for(i=0;i<data.ids.length;i++){
+            let imageId = data.ids[i]
+            document.getElementById( "image-" + imageId).remove()
+        }
+        setDefaultImage();
+
+    })
+  })
+  downloadImages.addEventListener('click', function(e){
+    e.preventDefault()
+    let ids =getImagesSelected()
+    window.location.href = this.href + '?ids=' + ids
+  })
 
   setDefaultImage();
 </script>

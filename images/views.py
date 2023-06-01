@@ -1,11 +1,15 @@
+import json
+import shutil
+from pathlib import Path
+from wsgiref.util import FileWrapper
+from AWS import upload_image,delete_mediafile, get_mediafile_content, download_file
 from django.shortcuts import render, redirect, get_object_or_404
-
+from django.views.decorators.csrf import csrf_exempt
 from django.urls import reverse
 from django.http import JsonResponse, HttpResponse
+from django.conf import settings
 from .forms import UploadFileForm
 from .models import Image, Album
-from AWS import upload_image,delete_mediafile, get_mediafile_content
-from django.conf import settings
 
 def download(request, pk):
     image = get_object_or_404(Image, pk= pk)
@@ -62,7 +66,30 @@ def create(request):
 def delete(request, pk):
     image = get_object_or_404(Image, pk=pk)
     album = image.album
-    if(delete_mediafile(image.bucket, image.key)):
-        image.delete()
-
+    Image.objects.delete_by_aws(image.id)
     return redirect('albums:detail', album.id)
+
+@csrf_exempt
+def delete_many(request):
+    if request.method == 'POST':
+        payload = json.loads(request.body)
+        ids = payload.get('ids', [])
+
+    return JsonResponse({
+        'ids': [ Image.objects.delete_by_aws(id) for id in ids]
+    })
+
+def download_many(request):
+    dir_path = 'tmp/images'
+    Path(dir_path).mkdir(parents=True, exist_ok=True)
+
+    for id in request.GET.get('ids','').split(','):
+        image = Image.objects.filter(id=int(id)).first()
+        if image:
+            local_path = dir_path + '/' + image.name
+            download_file(image.bucket, image.key, local_path)
+    shutil.make_archive('tmp/images','zip', dir_path)        
+    wrapper = FileWrapper(open('tmp/images.zip','rb'))
+    response = HttpResponse(wrapper,content_type='application/zip')
+    response['Content-Disposition'] = 'attachment; filename = "images.zip"'
+    return response

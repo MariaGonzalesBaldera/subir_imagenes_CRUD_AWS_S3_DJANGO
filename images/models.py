@@ -1,7 +1,14 @@
 from django.db import models
 from albums.models import Album
 
-from AWS import rename_file
+from AWS import rename_file, delete_mediafile
+
+class ImageManager(models.Manager):
+    def delete_by_aws(self, id):
+        image = self.filter(id= id).first()
+        if image and delete_mediafile(image.bucket, image.key):
+            image.delete()
+            return id
 
 # Create your models here.
 class Image(models.Model):
@@ -12,6 +19,8 @@ class Image(models.Model):
     size = models.IntegerField()
     album = models.ForeignKey(Album, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    objects = ImageManager()
 
     def __str__(self):
         return self.name
@@ -35,4 +44,3 @@ class Image(models.Model):
             self.key= new_key
             self.name = new_name
             self.save()
-            
