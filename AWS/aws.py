@@ -37,3 +37,12 @@ def rename_file(bucket, new_media_file_name, old_media_file_name):
 
     except Exception as err:
         print(err)
+
+def delete_mediafile(bucket, mediafile_key):
+    try:
+        s3 = boto3.resource('s3')
+        s3.Object(bucket, mediafile_key).delete()
+        return True
+
+    except Exception as err:
+        print(err)        

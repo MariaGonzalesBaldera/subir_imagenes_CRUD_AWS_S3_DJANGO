@@ -1,10 +1,20 @@
 from django.shortcuts import render, redirect, get_object_or_404
 
+from django.urls import reverse
 from django.http import JsonResponse
 from .forms import UploadFileForm
 from .models import Image, Album
-from AWS import upload_image
+from AWS import upload_image,delete_mediafile
 from django.conf import settings
+
+def show(request, pk):
+
+    image = get_object_or_404(Image, pk=pk)
+    return JsonResponse({
+        'id': image.id,
+        'name': image.name,
+        'delete_url': reverse('images:delete', kwargs={'pk':image.id})
+    })
 
 def update(request, pk):
     image = get_object_or_404(Image, pk=pk)
@@ -42,3 +52,10 @@ def create(request):
 
             return redirect('albums:detail', album.id)
         
+def delete(request, pk):
+    image = get_object_or_404(Image, pk=pk)
+    album = image.album
+    if(delete_mediafile(image.bucket, image.key)):
+        image.delete()
+
+    return redirect('albums:detail', album.id)

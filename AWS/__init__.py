@@ -1,1 +1,1 @@
-from .aws import create_folder, upload_image, rename_file
+from .aws import create_folder, upload_image, rename_file, delete_mediafile
