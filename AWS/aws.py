@@ -24,3 +24,16 @@ def upload_image(bucket, mediafile_key, file):
 
     except Exception as err:
         print(err)
+def rename_file(bucket, new_media_file_name, old_media_file_name):
+    try:
+        s3 = boto3.resource('s3')
+        
+        s3.Object(bucket, new_media_file_name).copy_from(CopySource = bucket+'/'+old_media_file_name)
+        s3.Object(bucket, old_media_file_name).delete()
+
+        s3.Object(bucket, new_media_file_name).Acl().put(ACL='public-read')
+
+        return True
+
+    except Exception as err:
+        print(err)
