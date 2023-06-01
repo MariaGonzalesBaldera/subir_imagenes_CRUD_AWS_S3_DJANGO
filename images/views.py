@@ -1,11 +1,18 @@
 from django.shortcuts import render, redirect, get_object_or_404
 
 from django.urls import reverse
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from .forms import UploadFileForm
 from .models import Image, Album
-from AWS import upload_image,delete_mediafile
+from AWS import upload_image,delete_mediafile, get_mediafile_content
 from django.conf import settings
+
+def download(request, pk):
+    image = get_object_or_404(Image, pk= pk)
+    content = get_mediafile_content(image.bucket, image.key)
+    response = HttpResponse(content, content_type=image.content_type)
+    response['Content-Disposition'] = f'attachment; filename={image.name}'
+    return response 
 
 def show(request, pk):
 

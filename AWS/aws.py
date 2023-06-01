@@ -46,3 +46,12 @@ def delete_mediafile(bucket, mediafile_key):
 
     except Exception as err:
         print(err)        
+
+def get_mediafile_content(bucket, mediafile_key):
+    try:
+        s3 = boto3.client('s3')
+        data = s3.get_object(Bucket = bucket, Key= mediafile_key)
+        return data['Body'].read()
+
+    except Exception as err:
+        print(err)        

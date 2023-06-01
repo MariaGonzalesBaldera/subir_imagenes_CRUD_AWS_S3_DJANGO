@@ -86,7 +86,7 @@
                   image-id="{{ image.id }}"
                   >Editar nombre</a
                 >
-                <a href="" class="dropdown-item">Descarga</a>
+                <a href="{% url 'images:download' image.id %}" class="dropdown-item">Descarga</a>
                 <div class="dropdown-divider"></div>
                 <a
                   href="{% url 'images:show' image.id %}"
