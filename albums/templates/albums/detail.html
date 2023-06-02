@@ -8,6 +8,14 @@
 {% include 'images/snippets/modal.html' %} 
 {% include 'images/snippets/delete.html' %}
 
+<div class="row mt-4">
+    <div class="col">
+        <form action="{% url 'images:search' %}" id="image-search">
+            <input type="text" name="q" class="form-control" placeholder="Escriba un prefijo ... " id="">
+        </form>
+    </div>
+</div>
+
 <div class="row mt-2">
   <div class="col">
     <h4><a href="{% url 'albums:list' %}">Galería/</a> {{ object }}</h4>
@@ -55,70 +63,9 @@
           <th></th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="table-images">
         {% for image in images %}
-        <tr class="row-image" image-id="{{ image.id }}" id="image-{{ image.id }}">
-            <td><div class="form-check">
-                <input type="checkbox" name="" class="form-check-input check-images" id="" image-id="{{ image.id }}">
-              </div></td>
-          <td>
-            <input
-              type="hidden"
-              value="{{ image.url }}"
-              id="image-preview-{{ image.id }}"
-            />
-            <div id="image-name-{{ image.id }}">{{ image.name }}</div>
-            <form
-              action="{% url 'images:update' image.pk %}"
-              method="POST"
-              class="image-form"
-              image-id="{{ image.id }}"
-            >
-              {% csrf_token %}
-              <input
-                type="hidden"
-                value="{{ image.title }}"
-                class="form-control"
-                id="image-input-name-{{ image.id }}"
-                name="name"
-              />
-            </form>
-          </td>
-          <td>{{ image.created_at }}</td>
-          <td>{{ image.size }}</td>
-          <td>
-            <div class="btn-group">
-              <button
-                type="button"
-                class="btn btn-secondary dropdown-toggle"
-                data-bs-toggle="dropdown"
-              ></button>
-              <div class="dropdown-menu">
-                <a
-                  href=" {{ image.url }} "
-                  target="_blank"
-                  class="dropdown-item"
-                  >Vista previa</a
-                >
-                <a
-                  href=""
-                  class="dropdown-item image-edit"
-                  image-id="{{ image.id }}"
-                  >Editar nombre</a
-                >
-                <a href="{% url 'images:download' image.id %}" class="dropdown-item">Descarga</a>
-                <div class="dropdown-divider"></div>
-                <a
-                  href="{% url 'images:show' image.id %}"
-                  class="dropdown-item"
-                  data-bs-toggle="modal"
-                  data-bs-target="#deleteModal"
-                  >Eliminar</a
-                >
-              </div>
-            </div>
-          </td>
-        </tr>
+            {% include 'images/snippets/image.html' %}
         {% endfor %}
       </tbody>
     </table>
@@ -129,11 +76,12 @@
 </div>
 {% endblock %} {% block javascript %}
 <script>
-  const imagePreview = document.getElementById("image-preview");
-  const imageDefault = "https://cfimagenesproject.s3.amazonaws.com/vacio.png";
+    const imagePreview = document.getElementById("image-preview");
+    const imageDefault = "https://cfimagenesproject.s3.amazonaws.com/vacio.png";
     const checkAllImages = document.getElementById('check-all-images')
     const downloadImages = document.getElementById('download-images')
     const deleteImages = document.getElementById('delete-images')
+    const imageSearch = document.getElementById('image-search')
 
     function checkInputs(){
         let images = document.querySelectorAll('input.check-images[type="checkbox"]:checked')
@@ -156,7 +104,7 @@
     return ids
     }
 
-  function selectRow(row) {
+    function selectRow(row) {
     let imageId = row.getAttribute("image-id");
     let input = document.getElementById("image-preview-" + imageId);
     imagePreview.src = input.value;
@@ -168,7 +116,7 @@
     row.classList.add("table-active");
   }
 
-  function setDefaultImage() {
+    function setDefaultImage() {
     let rows = document.getElementsByTagName("tr");
     if (rows.length >= 2) {
       selectRow(rows[1]);
@@ -177,13 +125,15 @@
     }
   }
 
-  document.querySelectorAll(".row-image").forEach((e) => {
+    function registerEvents(){
+    
+        document.querySelectorAll(".row-image").forEach((e) => {
     e.addEventListener("click", function (event) {
       selectRow(this);
     });
   });
 
-  document.querySelectorAll(".image-edit").forEach((e) => {
+        document.querySelectorAll(".image-edit").forEach((e) => {
     e.addEventListener("click", function (event) {
       event.preventDefault();
       let imageId = this.getAttribute("image-id");
@@ -194,7 +144,8 @@
       input.setAttribute("type", "text");
     });
   });
-  document.querySelectorAll(".image-form").forEach((e) => {
+    
+        document.querySelectorAll(".image-form").forEach((e) => {
     e.addEventListener("submit", function (event) {
       event.preventDefault();
 
@@ -217,12 +168,13 @@
         });
     });
   });
-  document.querySelectorAll('.check-images').forEach(e=>{
+        
+        document.querySelectorAll('.check-images').forEach(e=>{
     e.addEventListener('change',function(event){
         checkInputs()
     })
   })
-
+    }
 
   let deleteModal = document.getElementById("deleteModal");
   deleteModal.addEventListener("show.bs.modal", function (event) {
@@ -268,6 +220,20 @@
     window.location.href = this.href + '?ids=' + ids
   })
 
+  imageSearch.addEventListener('submit', function(e){
+    e.preventDefault()
+    fetch(this.action + '?q=' + this.q.value)
+    .then(response => response.json())
+    .then(data=>{
+        let table = document.getElementById('table-images')
+        table.innerHTML = data.images.toString().replaceAll(',','')   
+        
+        registerEvents();
+        setDefaultImage();
+    })
+  })
+
+  registerEvents();
   setDefaultImage();
 </script>
 {% endblock %}

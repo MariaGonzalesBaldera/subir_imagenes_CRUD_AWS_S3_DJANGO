@@ -5,11 +5,28 @@ from wsgiref.util import FileWrapper
 from AWS import upload_image,delete_mediafile, get_mediafile_content, download_file
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
+from django.template.loader import get_template
 from django.urls import reverse
 from django.http import JsonResponse, HttpResponse
 from django.conf import settings
 from .forms import UploadFileForm
 from .models import Image, Album
+
+@csrf_exempt
+def search(request):
+    if request.method == 'GET' and request.GET.get('q'):
+
+        template = get_template('images/snippets/image.html')
+        images =[
+            template.render({
+                'image': image
+            })
+            for image in Image.objects.filter(name__startswith=request.GET['q'])
+        ]
+        return JsonResponse({
+            'success': True,
+            'images': images
+        })    
 
 def download(request, pk):
     image = get_object_or_404(Image, pk= pk)
