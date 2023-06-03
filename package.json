@@ -1,0 +1,22 @@
+{
+  "name": "aws_images",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "install": "pip install -r requirements.txt",
+    "vercel-postinstall": "node vercel-postinstall.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MariaGonzalesBaldera/subir_imagenes_CRUD_AWS_S3_DJANGO.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MariaGonzalesBaldera/subir_imagenes_CRUD_AWS_S3_DJANGO/issues"
+  },
+  "homepage": "https://github.com/MariaGonzalesBaldera/subir_imagenes_CRUD_AWS_S3_DJANGO#readme"
+}
